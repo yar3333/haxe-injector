@@ -1,5 +1,3 @@
-package injector;
-
 import haxe.rtti.CType;
 import haxe.rtti.Rtti;
 using Lambda;

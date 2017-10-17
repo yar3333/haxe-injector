@@ -1,5 +1,3 @@
-import injector.Injector;
-
 class Main
 {
 	public static function main()
