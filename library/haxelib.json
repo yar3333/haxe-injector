@@ -1,0 +1,11 @@
+{
+  "name": "injector",
+  "license": "LGPL",
+  "tags": ["js", "javascript", "inject", "injection", "di", "dependency"],
+  "description": "Light library to implement DI (dependency injection) pattern for JavaScript platform.",
+  "contributors": ["yar3333"],
+  "releasenote": "Init.",
+  "version": "1.0.0",
+  "url": "https://bitbucket.org/yar3333/haxe-injector",
+  "dependencies": {}
+}
