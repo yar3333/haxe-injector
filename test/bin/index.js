@@ -198,10 +198,10 @@ _$List_ListIterator.prototype = {
 var Main = function() { };
 Main.__name__ = ["Main"];
 Main.main = function() {
-	var injector1 = new injector_Injector();
-	injector1.map(service_Service,new service_Service());
+	var injector = new js_injecting_Injector();
+	injector.map(service_Service,new service_Service());
 	var modA = new moda_ModA();
-	injector1.injectInto(modA);
+	injector.injectInto(modA);
 	modA.modFunc();
 };
 Math.__name__ = ["Math"];
@@ -1635,59 +1635,6 @@ haxe_xml_Printer.prototype = {
 	}
 	,__class__: haxe_xml_Printer
 };
-var injector_Injector = function() {
-	this.objects = new haxe_ds_StringMap();
-};
-injector_Injector.__name__ = ["injector","Injector"];
-injector_Injector.prototype = {
-	map: function(type,object) {
-		var rtti = haxe_rtti_Rtti.getRtti(type);
-		if(rtti == null) {
-			throw new Error("Mapped type must have @:rtti meta.");
-		}
-		var key = rtti.path;
-		var _this = this.objects;
-		if(__map_reserved[key] != null) {
-			_this.setReserved(key,object);
-		} else {
-			_this.h[key] = object;
-		}
-		return this;
-	}
-	,injectInto: function(target) {
-		var klass = target.__proto__.__class__;
-		if(klass == null) {
-			throw new Error("InjectTarget.getClass() must return not null value.");
-		}
-		var rtti = haxe_rtti_Rtti.getRtti(klass);
-		if(rtti == null) {
-			throw new Error("InjectTarget type must have @:rtti meta.");
-		}
-		var _g_head = rtti.fields.h;
-		while(_g_head != null) {
-			var val = _g_head.item;
-			_g_head = _g_head.next;
-			var field = val;
-			if(Lambda.exists(field.meta,function(m) {
-				return m.name == "inject";
-			})) {
-				var _g = field.type;
-				if(_g[1] == 2) {
-					var paramsList = _g[3];
-					var name = _g[2];
-					if(!this.objects.exists(name)) {
-						throw new Error("Type '" + name + "' not found in injector.");
-					}
-					target[field.name] = this.objects.get(name);
-				} else {
-					throw new Error("Only classes are supported.");
-				}
-			}
-		}
-		return target;
-	}
-	,__class__: injector_Injector
-};
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
 	this.val = val;
@@ -1818,6 +1765,63 @@ js_Boot.__nativeClassName = function(o) {
 };
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
+};
+var js_injecting_InjectorRO = function() { };
+js_injecting_InjectorRO.__name__ = ["js","injecting","InjectorRO"];
+js_injecting_InjectorRO.prototype = {
+	__class__: js_injecting_InjectorRO
+};
+var js_injecting_Injector = function() {
+	this.objects = new haxe_ds_StringMap();
+};
+js_injecting_Injector.__name__ = ["js","injecting","Injector"];
+js_injecting_Injector.__interfaces__ = [js_injecting_InjectorRO];
+js_injecting_Injector.prototype = {
+	map: function(type,object) {
+		var rtti = haxe_rtti_Rtti.getRtti(type);
+		if(rtti == null) {
+			throw new Error("Mapped type must have @:rtti meta.");
+		}
+		var key = rtti.path;
+		var _this = this.objects;
+		if(__map_reserved[key] != null) {
+			_this.setReserved(key,object);
+		} else {
+			_this.h[key] = object;
+		}
+	}
+	,injectInto: function(target) {
+		var klass = target.__proto__.__class__;
+		if(klass == null) {
+			throw new Error("InjectTarget.getClass() must return not null value.");
+		}
+		var rtti = haxe_rtti_Rtti.getRtti(klass);
+		if(rtti == null) {
+			throw new Error("InjectTarget type must have @:rtti meta.");
+		}
+		var _g_head = rtti.fields.h;
+		while(_g_head != null) {
+			var val = _g_head.item;
+			_g_head = _g_head.next;
+			var field = val;
+			if(Lambda.exists(field.meta,function(m) {
+				return m.name == "inject";
+			})) {
+				var _g = field.type;
+				if(_g[1] == 2) {
+					var paramsList = _g[3];
+					var name = _g[2];
+					if(!this.objects.exists(name)) {
+						throw new Error("Type '" + name + "' not found in injector.");
+					}
+					target[field.name] = this.objects.get(name);
+				} else {
+					throw new Error("Only classes are supported.");
+				}
+			}
+		}
+	}
+	,__class__: js_injecting_Injector
 };
 var moda_ModA = __webpack_require__(2).ModA;
 var service_Service = __webpack_require__(3).Service;

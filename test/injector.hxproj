@@ -44,11 +44,10 @@
   <preBuildCommand>haxelib dev js-inject-service modules\js-inject-service\library
 haxelib dev js-inject-moda modules\js-inject-moda\library</preBuildCommand>
   <!-- Executed after build -->
-  <postBuildCommand alwaysRun="False">cmd /C npm install
-cmd /C webpack --config webpack.config.js bin/index.js bin/index.js</postBuildCommand>
+  <postBuildCommand alwaysRun="False">cmd /C webpack --config webpack.config.js bin/index.js bin/index.js</postBuildCommand>
   <!-- Other project options -->
   <options>
-    <option showHiddenPaths="True" />
+    <option showHiddenPaths="False" />
     <option testMovie="Custom" />
     <option testMovieCommand="bin\index.html" />
   </options>

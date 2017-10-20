@@ -1,8 +1,10 @@
+package js.injecting;
+
 import haxe.rtti.CType;
 import haxe.rtti.Rtti;
 using Lambda;
 
-class Injector
+class Injector implements InjectorRO
 {
 	var objects = new Map<String, Dynamic>();
 	
@@ -10,15 +12,14 @@ class Injector
 	{
 	}
 	
-	public function map<T>(type:Class<T>, object:T) : Injector
+	public function map<T>(type:Class<T>, object:T) : Void
 	{
 		var rtti = Rtti.getRtti(type);
 		if (rtti == null) throw new js.Error("Mapped type must have @:rtti meta.");
 		objects.set(rtti.path, object);
-		return this;
 	}
 	
-	public function injectInto<T>(target:T) : T
+	public function injectInto(target:Dynamic) : Void
 	{
 		var klass = untyped __js__("target.__proto__.__class__");
 		if (klass == null) throw new js.Error("InjectTarget.getClass() must return not null value.");
@@ -41,7 +42,5 @@ class Injector
 				}
 			}
 		}
-		
-		return target;
 	}
 }

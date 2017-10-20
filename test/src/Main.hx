@@ -1,3 +1,5 @@
+import js.injecting.Injector;
+
 class Main
 {
 	public static function main()
