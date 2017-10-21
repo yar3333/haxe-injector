@@ -1,5 +1,6 @@
 package js.injecting;
 
+@:rtti
 class InjectContainer
 {
 	public function new(injector:InjectorRO)
