@@ -24,6 +24,7 @@ class Injector implements InjectorRO
 	{
 		var rtti = Rtti.getRtti(type);
 		if (rtti == null) throw new js.Error("Mapped type must have @:rtti meta.");
+		if (object == null) throw new js.Error("Map type `" + rtti.path + "` to null.");
 		objects.set(rtti.path, object);
 	}
 	
