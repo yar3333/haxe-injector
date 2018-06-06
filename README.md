@@ -10,6 +10,10 @@ Compared to other haxe DI libraries:
 	* ready to separated compilation on JavaScript target (useful for using with `webpack` and similar);
 	* only classes and interfaces are supported.
 
+
+Basic using
+-----------
+
 ```haxe
 @:rtti
 class MyClass
@@ -24,7 +28,8 @@ class MyClass
 		service.serviceFunc();
 	}
 	
-	// this method need because MyClass can be in other module
+	// below method is only need if you use separate compilation (nmp modules, for example)
+	// because Type.getClass() can't get data across js module boundary
 	public function getClass() return Type.getClass(this);
 }
 
