@@ -23,8 +23,8 @@ class Injector implements InjectorRO
 	public function map<T>(type:Class<T>, object:T) : Void
 	{
 		var rtti = Rtti.getRtti(type);
-		if (rtti == null) throw new js.Error("Mapped type must have @:rtti meta.");
-		if (object == null) throw new js.Error("Map type `" + rtti.path + "` to null.");
+		if (rtti == null) throw new js.lib.Error("Mapped type must have @:rtti meta.");
+		if (object == null) throw new js.lib.Error("Map type `" + rtti.path + "` to null.");
 		objects.set(rtti.path, object);
 	}
 	
@@ -41,7 +41,7 @@ class Injector implements InjectorRO
 	function injectIntoInner(target:Dynamic, proto:Proto) : Void
 	{
 		var klass = proto.__class__;
-		if (klass == null) throw new js.Error("Inject target must have reference to class in `__proto__.__class__` property.");
+		if (klass == null) throw new js.lib.Error("Inject target must have reference to class in `__proto__.__class__` property.");
 		
 		if (!Rtti.hasRtti(klass) && allowNoRttiForClasses.indexOf(klass) >= 0) return;
 		
@@ -53,11 +53,11 @@ class Injector implements InjectorRO
 				switch (field.type)
 				{
 					case CType.CClass(name, paramsList):
-						if (!objects.exists(name)) throw new js.Error("Type '" + name + "' not found in injector.");
+						if (!objects.exists(name)) throw new js.lib.Error("Type '" + name + "' not found in injector.");
 						Reflect.setField(target, field.name, objects.get(name));
 						
 					default:
-						throw new js.Error("Only classes are supported.");
+						throw new js.lib.Error("Only classes are supported.");
 				}
 			}
 		}
