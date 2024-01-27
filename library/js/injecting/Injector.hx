@@ -3,6 +3,7 @@ package js.injecting;
 import haxe.rtti.CType;
 import haxe.rtti.Rtti;
 using Lambda;
+using StringTools;
 
 private typedef Proto =
 {
@@ -25,7 +26,13 @@ class Injector implements InjectorRO
 		var rtti = Rtti.getRtti(type);
 		if (rtti == null) throw new js.lib.Error("Mapped type must have @:rtti meta.");
 		if (object == null) throw new js.lib.Error("Map type `" + rtti.path + "` to null.");
-		objects.set(rtti.path, object);
+		var rttiPathMeta = rtti.meta.find(x -> x.name == "rtti.path");
+        if (rttiPathMeta != null && rttiPathMeta.params.length > 0 && rttiPathMeta.params[0].length > 2)
+        {
+            var p = rttiPathMeta.params[0];
+            if (p.charAt(0) == '"' && p.charAt(p.length - 1) == '"') rttiPathMeta.params[0] = p.substr(1, p.length - 2);
+        }
+        objects.set(rttiPathMeta != null ? rttiPathMeta.params[0] : rtti.path, object);
 	}
 	
 	public function injectInto(target:Dynamic) : Void
