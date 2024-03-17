@@ -1,6 +1,5 @@
 package js.injecting;
 
-import haxe.Constraints.Constructible;
 import js.lib.Error;
 import js.lib.Map;
 import haxe.rtti.CType;
@@ -19,35 +18,30 @@ class Injector implements InjectorRO
 	
     public function addSingleton<T>(type:Class<T>, ?object:T) : Void
     {
-        final name = Type.getClassName(type);
+        final name = Rtti.getRtti(type).path;
         singletons.set(name, object);
     }
 
     public function addInstance(type:Class<Dynamic>) : Void
     {
-        final name = Type.getClassName(type);
+        final name = Rtti.getRtti(type).path;
         instances.set(name, type);
     }
 	
 	public function injectInto(target:Dynamic) : Void
 	{
-        final type = Type.getClass(target);
-        if (type == null) throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
-        if (!Rtti.hasRtti(type)) new Error("Inject target must have RTTI data. Please, use `@:rtti` meta or extends your class from `InjectContainer`.");
-		injectIntoInner(target, type);
+		injectIntoInner(target, Type.getClass(target));
 	}
 
     public function getService<T>(type:Class<T>) : T
     {
-        final name = Type.getClassName(type);
+        final name = Rtti.getRtti(type).path;
         return getObject(name);
     }
     	
 	function injectIntoInner(target:Dynamic, type:Class<Dynamic>) : Void
 	{
 		if (type == null) throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
-		
-		if (!Rtti.hasRtti(type)) return;
 		
 		final rtti = Rtti.getRtti(type);
 		for (field in rtti.fields)

@@ -36,16 +36,6 @@ class HxOverrides {
 $hxClasses["HxOverrides"] = HxOverrides;
 HxOverrides.__name__ = "HxOverrides";
 class Lambda {
-	static has(it,elt) {
-		let x = $getIterator(it);
-		while(x.hasNext()) {
-			let x1 = x.next();
-			if(x1 == elt) {
-				return true;
-			}
-		}
-		return false;
-	}
 	static exists(it,f) {
 		let x = $getIterator(it);
 		while(x.hasNext()) {
@@ -194,22 +184,6 @@ class Type {
 	static createInstance(cl,args) {
 		let ctor = Function.prototype.bind.apply(cl,[null].concat(args));
 		return new (ctor);
-	}
-	static getClassFields(c) {
-		let a = Object.getOwnPropertyNames(c);
-		HxOverrides.remove(a,"__id__");
-		HxOverrides.remove(a,"hx__closures__");
-		HxOverrides.remove(a,"__name__");
-		HxOverrides.remove(a,"__interfaces__");
-		HxOverrides.remove(a,"__isInterface__");
-		HxOverrides.remove(a,"__properties__");
-		HxOverrides.remove(a,"__instanceFields__");
-		HxOverrides.remove(a,"__super__");
-		HxOverrides.remove(a,"__meta__");
-		HxOverrides.remove(a,"prototype");
-		HxOverrides.remove(a,"name");
-		HxOverrides.remove(a,"length");
-		return a;
 	}
 }
 $hxClasses["Type"] = Type;
@@ -537,9 +511,6 @@ class haxe_rtti_Rtti {
 			let t = infos;
 			throw haxe_Exception.thrown("Enum mismatch: expected TClassDecl but found " + Std.string(t));
 		}
-	}
-	static hasRtti(c) {
-		return Lambda.has(Type.getClassFields(c),"__rtti");
 	}
 }
 $hxClasses["haxe.rtti.Rtti"] = haxe_rtti_Rtti;
@@ -1842,7 +1813,6 @@ class js_Boot {
 		return $global[name];
 	}
 }
-js_Boot.__toStr = null;
 $hxClasses["js.Boot"] = js_Boot;
 js_Boot.__name__ = "js.Boot";
 class js_injecting_InjectContainer {
@@ -1868,33 +1838,23 @@ class js_injecting_Injector {
 		this.singletons = new Map();
 	}
 	addSingleton(type,object) {
-		let name = type.__name__;
+		let name = haxe_rtti_Rtti.getRtti(type).path;
 		this.singletons.set(name,object);
 	}
 	addInstance(type) {
-		let name = type.__name__;
+		let name = haxe_rtti_Rtti.getRtti(type).path;
 		this.instances.set(name,type);
 	}
 	injectInto(target) {
-		let type = js_Boot.getClass(target);
-		if(type == null) {
-			throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
-		}
-		if(!haxe_rtti_Rtti.hasRtti(type)) {
-			new Error("Inject target must have RTTI data. Please, use `@:rtti` meta or extends your class from `InjectContainer`.");
-		}
-		this.injectIntoInner(target,type);
+		this.injectIntoInner(target,js_Boot.getClass(target));
 	}
 	getService(type) {
-		let name = type.__name__;
+		let name = haxe_rtti_Rtti.getRtti(type).path;
 		return this.getObject(name);
 	}
 	injectIntoInner(target,type) {
 		if(type == null) {
 			throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
-		}
-		if(!haxe_rtti_Rtti.hasRtti(type)) {
-			return;
 		}
 		let rtti = haxe_rtti_Rtti.getRtti(type);
 		let _g = 0;
@@ -1955,7 +1915,7 @@ Object.assign(js_injecting_Injector.prototype, {
 });
 class mypack_MyInstance {
 	constructor() {
-		console.log("test/src/mypack/MyInstance.hx:7:","MyInstance.new");
+		console.log("test/src/mypack/MyInstance.hx:8:","MyInstance.new");
 	}
 }
 $hxClasses["mypack.MyInstance"] = mypack_MyInstance;
@@ -2007,6 +1967,7 @@ haxe_xml_Parser.escapes = (function($this) {
 	return $r;
 }(this));
 js_injecting_InjectContainer.__rtti = "<class path=\"js.injecting.InjectContainer\" params=\"\">\n\t<new public=\"1\" set=\"method\" line=\"7\"><f a=\"injector\">\n\t<c path=\"js.injecting.InjectorRO\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t</meta>\n</class>";
+mypack_MyInstance.__rtti = "<class path=\"mypack.MyInstance\" params=\"\">\n\t<new public=\"1\" set=\"method\" line=\"7\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t</meta>\n</class>";
 mypack_MyService.__meta__ = { fields : { a : { inject : null}}};
 mypack_MyService.__rtti = "<class path=\"mypack.MyService\" params=\"\">\n\t<extends path=\"js.injecting.InjectContainer\"/>\n\t<a>\n\t\t<c path=\"mypack.MyInstance\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</a>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"injector\">\n\t<c path=\"js.injecting.InjectorRO\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta><m n=\":directlyUsed\"/></meta>\n</class>";
 Main.main();

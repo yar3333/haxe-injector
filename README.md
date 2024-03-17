@@ -1,14 +1,14 @@
 # injector haxe library #
 
-Light library implements DI (dependency injection) pattern.
+Light library implements DI (dependency injection) pattern for `JavaScript` platform.
 Library use haxe `RTTI` to get information about types (macro-related stuff not used).
 
 Compared to other haxe DI libraries:
 	
 	* simple design with minimal magic (only RTTI);
-	* no macro, so library may be used without haxe (just emulate RTTI data for class in your native js code);
-	* ready to separated compilation on JavaScript target (useful for using with `webpack` and similar);
-	* only classes and interfaces are supported.
+	* library may be used without haxe (you need to emulate RTTI XML data in your native js code);
+	* ready to separated compilation (useful for using with build systems like `webpack`);
+	* ES6-ready: guarantees injecting before constructor call (if you extend your classes from `InjectContainer`).
 
 
 Using
@@ -16,15 +16,17 @@ Using
 
 Injector fills the fields marked with `@inject` meta.
 
-Extending your classes from `InjectContainer` allow to do injection before your constructor starts. 
+Extending your classes from `InjectContainer` allow to do injection before your constructor starts (even with `-D js-es=6`). 
 
-You can avoid extending from `InjectContainer`, but don't forget to add `@:rtti` to your classes in that case.
+You can avoid extending from `InjectContainer`, but don't forget to add `@:rtti` to your classes
+(**in that case your constuctor will be called before injection due to ES6 limitations**).
 
 You can use `injector.injectInto()` to manually inject dependencies into container object.
 
 Example:
 
 ```haxe
+@:rtti
 class MyInstance
 {
     public function new()
