@@ -36,6 +36,16 @@ class HxOverrides {
 $hxClasses["HxOverrides"] = HxOverrides;
 HxOverrides.__name__ = "HxOverrides";
 class Lambda {
+	static has(it,elt) {
+		let x = $getIterator(it);
+		while(x.hasNext()) {
+			let x1 = x.next();
+			if(x1 == elt) {
+				return true;
+			}
+		}
+		return false;
+	}
 	static exists(it,f) {
 		let x = $getIterator(it);
 		while(x.hasNext()) {
@@ -184,6 +194,22 @@ class Type {
 	static createInstance(cl,args) {
 		let ctor = Function.prototype.bind.apply(cl,[null].concat(args));
 		return new (ctor);
+	}
+	static getClassFields(c) {
+		let a = Object.getOwnPropertyNames(c);
+		HxOverrides.remove(a,"__id__");
+		HxOverrides.remove(a,"hx__closures__");
+		HxOverrides.remove(a,"__name__");
+		HxOverrides.remove(a,"__interfaces__");
+		HxOverrides.remove(a,"__isInterface__");
+		HxOverrides.remove(a,"__properties__");
+		HxOverrides.remove(a,"__instanceFields__");
+		HxOverrides.remove(a,"__super__");
+		HxOverrides.remove(a,"__meta__");
+		HxOverrides.remove(a,"prototype");
+		HxOverrides.remove(a,"name");
+		HxOverrides.remove(a,"length");
+		return a;
 	}
 }
 $hxClasses["Type"] = Type;
@@ -511,6 +537,9 @@ class haxe_rtti_Rtti {
 			let t = infos;
 			throw haxe_Exception.thrown("Enum mismatch: expected TClassDecl but found " + Std.string(t));
 		}
+	}
+	static hasRtti(c) {
+		return Lambda.has(Type.getClassFields(c),"__rtti");
 	}
 }
 $hxClasses["haxe.rtti.Rtti"] = haxe_rtti_Rtti;
@@ -1813,6 +1842,7 @@ class js_Boot {
 		return $global[name];
 	}
 }
+js_Boot.__toStr = null;
 $hxClasses["js.Boot"] = js_Boot;
 js_Boot.__name__ = "js.Boot";
 class js_injecting_InjectContainer {
@@ -1836,6 +1866,7 @@ class js_injecting_Injector {
 	constructor() {
 		this.instances = new Map();
 		this.singletons = new Map();
+		this.allowNoRttiForClasses = new Set();
 	}
 	addSingleton(type,object) {
 		let name = haxe_rtti_Rtti.getRtti(type).path;
@@ -1852,9 +1883,15 @@ class js_injecting_Injector {
 		let name = haxe_rtti_Rtti.getRtti(type).path;
 		return this.getObject(name);
 	}
+	allowNoRttiForClass(type) {
+		this.allowNoRttiForClasses.add(type);
+	}
 	injectIntoInner(target,type) {
 		if(type == null) {
 			throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
+		}
+		if(this.allowNoRttiForClasses.has(type) && !haxe_rtti_Rtti.hasRtti(type)) {
+			return;
 		}
 		let rtti = haxe_rtti_Rtti.getRtti(type);
 		let _g = 0;

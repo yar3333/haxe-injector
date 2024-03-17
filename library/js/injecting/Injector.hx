@@ -2,6 +2,7 @@ package js.injecting;
 
 import js.lib.Error;
 import js.lib.Map;
+import js.lib.Set;
 import haxe.rtti.CType;
 import haxe.rtti.Rtti;
 using Lambda;
@@ -9,6 +10,8 @@ using StringTools;
 
 class Injector implements InjectorRO
 {
+    var allowNoRttiForClasses = new Set<Class<Dynamic>>();
+    
     var singletons = new Map<String, Dynamic>();
     var instances = new Map<String, Class<Dynamic>>();
 	
@@ -38,11 +41,18 @@ class Injector implements InjectorRO
         final name = Rtti.getRtti(type).path;
         return getObject(name);
     }
+
+    public function allowNoRttiForClass(type:Class<Dynamic>) : Void
+    {
+        allowNoRttiForClasses.add(type);
+    }
     	
 	function injectIntoInner(target:Dynamic, type:Class<Dynamic>) : Void
 	{
 		if (type == null) throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
 		
+        if (allowNoRttiForClasses.has(type) && !Rtti.hasRtti(type)) return;
+
 		final rtti = Rtti.getRtti(type);
 		for (field in rtti.fields)
 		{
