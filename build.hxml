@@ -1,3 +1,5 @@
---js dummy.js
---no-output
+--js test/bin/index.js
+--define js-es=6
 --class-path library
+--class-path test/src
+--main Main

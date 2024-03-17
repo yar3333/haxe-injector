@@ -1,60 +1,76 @@
 # injector haxe library #
 
-Light library to implement DI (dependency injection) pattern.
+Light library implements DI (dependency injection) pattern.
 Library use haxe `RTTI` to get information about types (macro-related stuff not used).
 
 Compared to other haxe DI libraries:
 	
 	* simple design with minimal magic (only RTTI);
-	* no macro, so library may be used without haxe (just emulate RTTI data for class in your native code);
+	* no macro, so library may be used without haxe (just emulate RTTI data for class in your native js code);
 	* ready to separated compilation on JavaScript target (useful for using with `webpack` and similar);
 	* only classes and interfaces are supported.
 
 
-Basic using
------------
+Using
+-----
+
+Injector fills the fields marked with `@inject` meta.
+
+Extending your classes from `InjectContainer` allow to do injection before your constructor starts. 
+
+You can avoid extending from `InjectContainer`, but don't forget to add `@:rtti` to your classes in that case.
+
+You can use `injector.injectInto()` to manually inject dependencies into container object.
+
+Example:
 
 ```haxe
-@:rtti
-class MyClass
+class MyInstance
 {
-	@inject var myService : Service;
-
-	public function new() {}
-	
-	public function myFunc()
-	{
-		trace("myFunc");
-		service.serviceFunc();
-	}
-	
-	// below method is only need if you use separate compilation (nmp modules, for example)
-	// because Type.getClass() can't get data across js module boundary
-	public function getClass() return Type.getClass(this);
+    public function new()
+    {
+        trace("MyInstance.new");
+    }
 }
 
-@:rtti
-class Service
+class MyService extends InjectContainer
 {
-	public function new() {}
-	
-	public function testFunc()
-	{
-		trace("testFunc!!!");
-	}
+    @inject var a : MyInstance;
+
+    // just example, constructor may be ommited
+    public function new(injector:InjectorRO)
+    {
+        super(injector);
+        
+        trace("MyService.new: " + (a != null ? "`a` defined" : "`a` NOT DEFINED"));
+    }
 }
 
 class Main
 {
 	public static function main()
 	{
-		var injector = new Injector();
-		injector.map(Service, new Service());
+		final injector = new Injector();
 		
-		var myObj = new MyClass();
-		injector.injectInto(myObj);
+        trace("injector.addSingleton(MyService)");
+        injector.addSingleton(MyService);
+
+        trace("injector.addInstance(MyInstance)");
+        injector.addInstance(MyInstance);
 		
-		myObj.myFunc();
+		trace("injector.getService(MyService)");
+        final service = injector.getService(MyService);
+        trace(service != null ? "`service` defined" : "`service` NOT DEFINED");
 	}
 }
+```
+
+Output:
+```shell
+injector.addSingleton(MyService)
+injector.addInstance(MyInstance)
+injector.getService(MyService)
+MyInstance.new
+MyService.new: `a` defined
+`service` defined
 ```

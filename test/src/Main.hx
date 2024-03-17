@@ -1,15 +1,21 @@
 import js.injecting.Injector;
 
+import mypack.*;
+
 class Main
 {
 	public static function main()
 	{
-		var injector = new Injector();
-		injector.map(service.Service, new service.Service());
+		final injector = new Injector();
 		
-		var modA = new moda.ModA();
-		injector.injectInto(modA);
+        trace("injector.addSingleton(MyService)");
+        injector.addSingleton(MyService);
+
+        trace("injector.addInstance(MyInstance)");
+        injector.addInstance(MyInstance);
 		
-		modA.modFunc();
+		trace("injector.getService(MyService)");
+        final service = injector.getService(MyService);
+        trace(service != null ? "`service` defined" : "`service` NOT DEFINED");
 	}
 }

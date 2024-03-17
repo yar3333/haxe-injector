@@ -1,71 +1,103 @@
 package js.injecting;
 
+import haxe.Constraints.Constructible;
+import js.lib.Error;
+import js.lib.Map;
 import haxe.rtti.CType;
 import haxe.rtti.Rtti;
 using Lambda;
 using StringTools;
 
-private typedef Proto =
-{
-	var __class__ : Class<Dynamic>;
-	var __proto__ : Proto;
-}
-
 class Injector implements InjectorRO
 {
-	var allowNoRttiForClasses = new Array<Class<Dynamic>>();
-	
-	var objects = new Map<String, Dynamic>();
+    var singletons = new Map<String, Dynamic>();
+    var instances = new Map<String, Class<Dynamic>>();
 	
 	public function new()
 	{
 	}
 	
-	public function map<T>(type:Class<T>, object:T) : Void
-	{
-		var rtti = Rtti.getRtti(type);
-		if (rtti == null) throw new js.lib.Error("Mapped type must have @:rtti meta.");
-		if (object == null) throw new js.lib.Error("Map type `" + rtti.path + "` to null.");
-        objects.set(rtti.path, object);
-	}
+    public function addSingleton<T>(type:Class<T>, ?object:T) : Void
+    {
+        final name = Type.getClassName(type);
+        singletons.set(name, object);
+    }
+
+    public function addInstance(type:Class<Dynamic>) : Void
+    {
+        final name = Type.getClassName(type);
+        instances.set(name, type);
+    }
 	
 	public function injectInto(target:Dynamic) : Void
 	{
-		injectIntoInner(target, target.__proto__);
+        final type = Type.getClass(target);
+        if (type == null) throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
+        if (!Rtti.hasRtti(type)) new Error("Inject target must have RTTI data. Please, use `@:rtti` meta or extends your class from `InjectContainer`.");
+		injectIntoInner(target, type);
 	}
-	
-	public function allowNoRttiForClass(type:Class<Dynamic>)
+
+    public function getService<T>(type:Class<T>) : T
+    {
+        final name = Type.getClassName(type);
+        return getObject(name);
+    }
+    	
+	function injectIntoInner(target:Dynamic, type:Class<Dynamic>) : Void
 	{
-		allowNoRttiForClasses.push(type);
-	}
-	
-	function injectIntoInner(target:Dynamic, proto:Proto) : Void
-	{
-		var klass = proto.__class__;
-		if (klass == null) throw new js.lib.Error("Inject target must have reference to class in `__proto__.__class__` property.");
+		if (type == null) throw new Error("Inject target must have reference to class in `__proto__.__class__` property.");
 		
-		if (!Rtti.hasRtti(klass) && allowNoRttiForClasses.indexOf(klass) >= 0) return;
+		if (!Rtti.hasRtti(type)) return;
 		
-		var rtti = Rtti.getRtti(klass);
+		final rtti = Rtti.getRtti(type);
 		for (field in rtti.fields)
 		{
-			if (field.meta.exists(function(m) return m.name == "inject"))
+			if (field.meta.exists(m -> m.name == "inject"))
 			{
 				switch (field.type)
 				{
 					case CType.CClass(name, paramsList):
-						if (!objects.exists(name)) throw new js.lib.Error("Type '" + name + "' not found in injector.");
-						Reflect.setField(target, field.name, objects.get(name));
+                        if (!Syntax.field(target, field.name))
+                        {
+                            final obj = getObject(name);
+                            if (obj == null) throw new Error("Type '" + name + "' not found in injector.");
+                            Reflect.setField(target, field.name, obj);
+                        }
 						
 					default:
-						throw new js.lib.Error("Only classes are supported.");
+						throw new Error("Only classes are supported.");
 				}
 			}
 		}
 		
 		if (rtti.superClass != null)
 		{
-			injectIntoInner(target, proto.__proto__);
+			injectIntoInner(target, Type.getSuperClass(type));
 		}
 	}
+
+    function getObject(name:String) : Dynamic
+    {
+        var r = singletons.get(name);
+        if (r != null) return r;
+        
+        if (singletons.has(name))
+        {
+            r = createObject(Type.resolveClass(name));
+            singletons.set(name, r);
+            return r;
+        }
+
+        return createObject(instances.get(name));
+    }
+
+    function createObject(type:Class<Dynamic>) : Dynamic
+    {
+        if (type == null) return null;
+
+        final r = Type.createInstance(type, [ this ]);
+        if (!Std.isOfType(r, InjectContainer)) injectInto(r);
+
+        return r;
+    }
 }
