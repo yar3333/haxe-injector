@@ -12,7 +12,7 @@ class Main
         injector.addSingleton(MyService);
 
         trace("injector.addSingletonMappedToValue(MyService2, new MyService2(true))");
-        injector.addSingletonMappedToValue(MyService2, new MyService2(true));
+        injector.addSingleton(MyService2, new MyService2(true));
 
         trace("injector.addInstance(MyInstance)");
         injector.addInstance(MyInstance);

@@ -24,7 +24,11 @@ class Injector implements InjectorRO
 	{
 	}
     
-    public function addSingleton(type:Class<Dynamic>) : Injector
+    overload extern public inline function addSingleton(type:Class<Dynamic>) return addSingletonSimple(type);
+    overload extern public inline function addSingleton<T,Z:T>(type:Class<T>, mapTo:Class<Z>) return addSingletonMappedToClass(type, mapTo);
+    overload extern public inline function addSingleton<T,Z:T>(type:Class<T>, value:Z) return addSingletonMappedToValue(type, value);
+    
+    function addSingletonSimple(type:Class<Dynamic>) : Injector
     {
         if (type == null) throw new Error("Argument `type` must not be null.");
         
@@ -35,7 +39,7 @@ class Injector implements InjectorRO
         return this;
     }
 
-    public function addSingletonMappedToClass<T,Z:T>(type:Class<T>, mapTo:Class<Z>) : Injector
+    function addSingletonMappedToClass<T,Z:T>(type:Class<T>, mapTo:Class<Z>) : Injector
     {
         if (type == null) throw new Error("Argument `type` must not be null.");
         if (mapTo == null) throw new Error("Argument `mapTo` must not be null.");
@@ -47,7 +51,7 @@ class Injector implements InjectorRO
         return this;
     }
     
-    public function addSingletonMappedToValue<T,Z:T>(type:Class<T>, value:Z) : Injector
+    function addSingletonMappedToValue<T,Z:T>(type:Class<T>, value:Z) : Injector
     {
         if (type == null) throw new Error("Argument `type` must not be null.");
         if (value == null) throw new Error("Argument `value` must not be null.");
@@ -57,8 +61,11 @@ class Injector implements InjectorRO
         singletons.set(rtti.path, { mapTo:rtti.path, value:value });
         return this;
     }
+    
+    overload extern public inline function addInstance(type:Class<Dynamic>) return addInstanceSimple(type);
+    overload extern public inline function addInstance<T,Z:T>(type:Class<T>, mapTo:Class<Z>) return addInstanceMappedToClass(type, mapTo);
 	
-    public function addInstance(type:Class<Dynamic>) : Injector
+    function addInstanceSimple(type:Class<Dynamic>) : Injector
     {
         if (type == null) throw new Error("Argument `type` must not be null.");
         
@@ -69,7 +76,7 @@ class Injector implements InjectorRO
         return this;
     }
 
-    public function addInstanceMappedToClass<T,Z:T>(type:Class<T>, mapTo:Class<Z>) : Injector
+    function addInstanceMappedToClass<T,Z:T>(type:Class<T>, mapTo:Class<Z>) : Injector
     {
         if (type == null) throw new Error("Argument `type` must not be null.");
         if (mapTo == null) throw new Error("Argument `mapTo` must not be null.");

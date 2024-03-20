@@ -63,11 +63,11 @@ class Main {
 	static main() {
 		let injector = new js_injecting_Injector();
 		console.log("test/src/Main.hx:11:","injector.addSingleton(MyService)");
-		injector.addSingleton(mypack_MyService);
+		injector.addSingletonSimple(mypack_MyService);
 		console.log("test/src/Main.hx:14:","injector.addSingletonMappedToValue(MyService2, new MyService2(true))");
 		injector.addSingletonMappedToValue(mypack_MyService2,new mypack_MyService2(true));
 		console.log("test/src/Main.hx:17:","injector.addInstance(MyInstance)");
-		injector.addInstance(mypack_MyInstance);
+		injector.addInstanceSimple(mypack_MyInstance);
 		console.log("test/src/Main.hx:20:","injector.getService(MyService)");
 		let service = injector.getService(mypack_MyService);
 		console.log("test/src/Main.hx:22:",service != null ? "`service` defined" : "`service` NOT DEFINED");
@@ -1870,7 +1870,7 @@ class js_injecting_Injector {
 		this.singletons = new Map();
 		this.allowNoRttiForClasses = new Set();
 	}
-	addSingleton(type) {
+	addSingletonSimple(type) {
 		if(type == null) {
 			throw new Error("Argument `type` must not be null.");
 		}
@@ -1906,7 +1906,7 @@ class js_injecting_Injector {
 		this.singletons.set(rtti.path,{ mapTo : rtti.path, value : value});
 		return this;
 	}
-	addInstance(type) {
+	addInstanceSimple(type) {
 		if(type == null) {
 			throw new Error("Argument `type` must not be null.");
 		}

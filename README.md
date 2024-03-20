@@ -5,8 +5,8 @@ Haxe's `RTTI` feature used to get information about types (no macro-related stuf
 
 Compared to other haxe DI libraries:
 	
+    * optimized for js platform;
 	* simple design with minimal magic;
-	* may be used without haxe (you need to emulate RTTI XML data in your native js code);
 	* ready to separated compilation (`npm`/`webpack` compatible);
 	* support latest javascript standard (ES6).
 
@@ -18,10 +18,10 @@ Synopsis
     
     injector
         .addSingleton(MyClass)
-        .addSingletonMappedToClass(MyInterface, MyClass)
-        .addSingletonMappedToValue(MyInterface, myObject)
+        .addSingleton(MyInterface, MyClass) // mapping to class
+        .addSingleton(MyInterface, myObject) // mapping to value
         .addInstance(MyClass)
-        .addInstanceMappedToClass(MyInterface, MyClass);
+        .addInstance(MyInterface, MyClass); // mapping to class
 
     final service = injector.getService(MyInterface);
 
@@ -66,6 +66,8 @@ Full example
 ------------
 
 ```haxe
+import js.injecting.*;
+
 @:rtti
 class MyInstance
 {
