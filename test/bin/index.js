@@ -64,11 +64,13 @@ class Main {
 		let injector = new js_injecting_Injector();
 		console.log("test/src/Main.hx:11:","injector.addSingleton(MyService)");
 		injector.addSingleton(mypack_MyService);
-		console.log("test/src/Main.hx:14:","injector.addInstance(MyInstance)");
+		console.log("test/src/Main.hx:14:","injector.addSingletonMappedToValue(MyService2, new MyService2(true))");
+		injector.addSingletonMappedToValue(mypack_MyService2,new mypack_MyService2(true));
+		console.log("test/src/Main.hx:17:","injector.addInstance(MyInstance)");
 		injector.addInstance(mypack_MyInstance);
-		console.log("test/src/Main.hx:17:","injector.getService(MyService)");
+		console.log("test/src/Main.hx:20:","injector.getService(MyService)");
 		let service = injector.getService(mypack_MyService);
-		console.log("test/src/Main.hx:19:",service != null ? "`service` defined" : "`service` NOT DEFINED");
+		console.log("test/src/Main.hx:22:",service != null ? "`service` defined" : "`service` NOT DEFINED");
 	}
 }
 $hxClasses["Main"] = Main;
@@ -1868,13 +1870,66 @@ class js_injecting_Injector {
 		this.singletons = new Map();
 		this.allowNoRttiForClasses = new Set();
 	}
-	addSingleton(type,object) {
-		let name = haxe_rtti_Rtti.getRtti(type).path;
-		this.singletons.set(name,object);
+	addSingleton(type) {
+		if(type == null) {
+			throw new Error("Argument `type` must not be null.");
+		}
+		let rtti = haxe_rtti_Rtti.getRtti(type);
+		if(rtti.isInterface) {
+			throw new Error("Interface must be mapped. Use class instead or injector's method with mapping.");
+		}
+		this.singletons.set(rtti.path,{ mapTo : rtti.path, value : null});
+		return this;
+	}
+	addSingletonMappedToClass(type,mapTo) {
+		if(type == null) {
+			throw new Error("Argument `type` must not be null.");
+		}
+		if(mapTo == null) {
+			throw new Error("Argument `mapTo` must not be null.");
+		}
+		let rtti2 = haxe_rtti_Rtti.getRtti(mapTo);
+		if(rtti2.isInterface) {
+			throw new Error("Could't map to interface.");
+		}
+		this.singletons.set(haxe_rtti_Rtti.getRtti(type).path,{ mapTo : rtti2.path, value : null});
+		return this;
+	}
+	addSingletonMappedToValue(type,value) {
+		if(type == null) {
+			throw new Error("Argument `type` must not be null.");
+		}
+		if(value == null) {
+			throw new Error("Argument `value` must not be null.");
+		}
+		let rtti = haxe_rtti_Rtti.getRtti(type);
+		this.singletons.set(rtti.path,{ mapTo : rtti.path, value : value});
+		return this;
 	}
 	addInstance(type) {
-		let name = haxe_rtti_Rtti.getRtti(type).path;
-		this.instances.set(name,type);
+		if(type == null) {
+			throw new Error("Argument `type` must not be null.");
+		}
+		let rtti = haxe_rtti_Rtti.getRtti(type);
+		if(rtti.isInterface) {
+			throw new Error("Interface must be mapped. Use class instead or injector's method with mapping.");
+		}
+		this.instances.set(rtti.path,rtti.path);
+		return this;
+	}
+	addInstanceMappedToClass(type,mapTo) {
+		if(type == null) {
+			throw new Error("Argument `type` must not be null.");
+		}
+		if(mapTo == null) {
+			throw new Error("Argument `mapTo` must not be null.");
+		}
+		let rtti2 = haxe_rtti_Rtti.getRtti(mapTo);
+		if(rtti2.isInterface) {
+			throw new Error("Could't map to interface.");
+		}
+		this.instances.set(haxe_rtti_Rtti.getRtti(type).path,rtti2.path);
+		return this;
 	}
 	injectInto(target) {
 		this.injectIntoInner(target,js_Boot.getClass(target));
@@ -1923,18 +1978,18 @@ class js_injecting_Injector {
 		}
 	}
 	getObject(name) {
-		let r = this.singletons.get(name);
-		if(r != null) {
-			return r;
+		let data = this.singletons.get(name);
+		if((data != null ? data.value : null) != null) {
+			return data.value;
 		}
-		if(this.singletons.has(name)) {
-			r = this.createObject($hxClasses[name]);
-			this.singletons.set(name,r);
-			return r;
+		if(data != null) {
+			data.value = this.createObject(data.mapTo);
+			return data.value;
 		}
 		return this.createObject(this.instances.get(name));
 	}
-	createObject(type) {
+	createObject(mapToName) {
+		let type = $hxClasses[mapToName];
 		if(type == null) {
 			return null;
 		}
@@ -1972,6 +2027,16 @@ mypack_MyService.__super__ = js_injecting_InjectContainer;
 Object.assign(mypack_MyService.prototype, {
 	__class__: mypack_MyService
 });
+class mypack_MyService2 {
+	constructor(t) {
+		console.log("test/src/mypack/MyService2.hx:8:","MyService2.new: " + (t == null ? "null" : "" + t));
+	}
+}
+$hxClasses["mypack.MyService2"] = mypack_MyService2;
+mypack_MyService2.__name__ = "mypack.MyService2";
+Object.assign(mypack_MyService2.prototype, {
+	__class__: mypack_MyService2
+});
 function $getIterator(o) { if( o instanceof Array ) return new haxe_iterators_ArrayIterator(o); else return o.iterator(); }
 if(typeof(performance) != "undefined" ? typeof(performance.now) == "function" : false) {
 	HxOverrides.now = performance.now.bind(performance);
@@ -2007,5 +2072,6 @@ js_injecting_InjectContainer.__rtti = "<class path=\"js.injecting.InjectContaine
 mypack_MyInstance.__rtti = "<class path=\"mypack.MyInstance\" params=\"\">\n\t<new public=\"1\" set=\"method\" line=\"7\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t</meta>\n</class>";
 mypack_MyService.__meta__ = { fields : { a : { inject : null}}};
 mypack_MyService.__rtti = "<class path=\"mypack.MyService\" params=\"\">\n\t<extends path=\"js.injecting.InjectContainer\"/>\n\t<a>\n\t\t<c path=\"mypack.MyInstance\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</a>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"injector\">\n\t<c path=\"js.injecting.InjectorRO\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta><m n=\":directlyUsed\"/></meta>\n</class>";
+mypack_MyService2.__rtti = "<class path=\"mypack.MyService2\" params=\"\">\n\t<new public=\"1\" set=\"method\" line=\"7\"><f a=\"t\">\n\t<x path=\"Bool\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t</meta>\n</class>";
 Main.main();
 })(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);

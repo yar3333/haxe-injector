@@ -11,6 +11,9 @@ class Main
         trace("injector.addSingleton(MyService)");
         injector.addSingleton(MyService);
 
+        trace("injector.addSingletonMappedToValue(MyService2, new MyService2(true))");
+        injector.addSingletonMappedToValue(MyService2, new MyService2(true));
+
         trace("injector.addInstance(MyInstance)");
         injector.addInstance(MyInstance);
 		

@@ -1,18 +1,54 @@
-# injector haxe library #
+# injector #
 
-Light library implements DI (dependency injection) pattern for `JavaScript` platform.
-Library use haxe `RTTI` to get information about types (macro-related stuff not used).
+Light haxe library implements DI (dependency injection) pattern for `JavaScript` platform.
+Haxe's `RTTI` feature used to get information about types (no macro-related stuff).
 
 Compared to other haxe DI libraries:
 	
-	* simple design with minimal magic (only RTTI);
-	* library may be used without haxe (you need to emulate RTTI XML data in your native js code);
-	* ready to separated compilation (useful for using with build systems like `webpack`);
-	* ES6-ready: guarantees injecting before constructor call (if you extend your classes from `InjectContainer`).
+	* simple design with minimal magic;
+	* may be used without haxe (you need to emulate RTTI XML data in your native js code);
+	* ready to separated compilation (`npm`/`webpack` compatible);
+	* support latest javascript standard (ES6).
 
 
-Using
------
+Synopsis
+--------
+```haxe
+    final injector = new Injector();
+    
+    injector
+        .addSingleton(MyClass)
+        .addSingletonMappedToClass(MyInterface, MyClass)
+        .addSingletonMappedToValue(MyInterface, myObject)
+        .addInstance(MyClass)
+        .addInstanceMappedToClass(MyInterface, MyClass);
+
+    final service = injector.getService(MyInterface);
+
+    // if you prefer manual injecting
+    @:rtti
+    class MyClass
+    {
+        @inject var myVarA : MyInterface;
+        @inject var myVarB : MyClass;
+
+        public function new(injector:InjectorRO)
+        {
+            injector.injectInto(this); // fills @inject fields
+        }
+    }
+
+    // `InjectContainer` already has @:rtti and appropriate constructor
+    class MyClass extends InjectContainer
+    {
+        @inject var myVarA : MyInterface;
+        @inject var myVarB : MyClass;
+    }
+```
+
+
+Details
+-------
 
 Injector fills the fields marked with `@inject` meta.
 
@@ -23,7 +59,11 @@ You can avoid extending from `InjectContainer`, but don't forget to add `@:rtti`
 
 You can use `injector.injectInto()` to manually inject dependencies into container object.
 
-Example:
+`InjectorRO` is read-only interface for `Injector` (without `add***` methods).
+
+
+Full example
+------------
 
 ```haxe
 @:rtti

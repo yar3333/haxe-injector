@@ -6,31 +6,81 @@ import js.lib.Set;
 import haxe.rtti.CType;
 import haxe.rtti.Rtti;
 using Lambda;
-using StringTools;
+
+private typedef Singlenton =
+{
+    var mapTo : String;
+    var value : Dynamic;
+}
 
 class Injector implements InjectorRO
 {
-    var allowNoRttiForClasses = new Set<Class<Dynamic>>();
+    final allowNoRttiForClasses = new Set<Class<Dynamic>>();
     
-    var singletons = new Map<String, Dynamic>();
-    var instances = new Map<String, Class<Dynamic>>();
+    final singletons = new Map<String, Singlenton>();
+    final instances = new Map<String, String>();
 	
 	public function new()
 	{
 	}
-	
-    public function addSingleton<T>(type:Class<T>, ?object:T) : Void
+    
+    public function addSingleton(type:Class<Dynamic>) : Injector
     {
-        final name = Rtti.getRtti(type).path;
-        singletons.set(name, object);
+        if (type == null) throw new Error("Argument `type` must not be null.");
+        
+        final rtti = Rtti.getRtti(type);
+        if (rtti.isInterface) throw new Error("Interface must be mapped. Use class instead or injector's method with mapping.");
+
+        singletons.set(rtti.path, { mapTo:rtti.path, value:null });
+        return this;
     }
 
-    public function addInstance(type:Class<Dynamic>) : Void
+    public function addSingletonMappedToClass<T,Z:T>(type:Class<T>, mapTo:Class<Z>) : Injector
     {
-        final name = Rtti.getRtti(type).path;
-        instances.set(name, type);
+        if (type == null) throw new Error("Argument `type` must not be null.");
+        if (mapTo == null) throw new Error("Argument `mapTo` must not be null.");
+        
+        final rtti2 = Rtti.getRtti(mapTo);
+        if (rtti2.isInterface) throw new Error("Could't map to interface.");
+
+        singletons.set(Rtti.getRtti(type).path, { mapTo:rtti2.path, value:null });
+        return this;
+    }
+    
+    public function addSingletonMappedToValue<T,Z:T>(type:Class<T>, value:Z) : Injector
+    {
+        if (type == null) throw new Error("Argument `type` must not be null.");
+        if (value == null) throw new Error("Argument `value` must not be null.");
+        
+        final rtti = Rtti.getRtti(type);
+
+        singletons.set(rtti.path, { mapTo:rtti.path, value:value });
+        return this;
     }
 	
+    public function addInstance(type:Class<Dynamic>) : Injector
+    {
+        if (type == null) throw new Error("Argument `type` must not be null.");
+        
+        final rtti = Rtti.getRtti(type);
+        if (rtti.isInterface) throw new Error("Interface must be mapped. Use class instead or injector's method with mapping.");
+
+        instances.set(rtti.path, rtti.path);
+        return this;
+    }
+
+    public function addInstanceMappedToClass<T,Z:T>(type:Class<T>, mapTo:Class<Z>) : Injector
+    {
+        if (type == null) throw new Error("Argument `type` must not be null.");
+        if (mapTo == null) throw new Error("Argument `mapTo` must not be null.");
+        
+        final rtti2 = Rtti.getRtti(mapTo);
+        if (rtti2.isInterface) throw new Error("Could't map to interface.");
+
+        instances.set(Rtti.getRtti(type).path, rtti2.path);
+        return this;
+    }
+
 	public function injectInto(target:Dynamic) : Void
 	{
 		injectIntoInner(target, Type.getClass(target));
@@ -82,21 +132,21 @@ class Injector implements InjectorRO
 
     function getObject(name:String) : Dynamic
     {
-        var r = singletons.get(name);
-        if (r != null) return r;
+        var data = singletons.get(name);
+        if (data?.value != null) return data.value;
         
-        if (singletons.has(name))
+        if (data != null)
         {
-            r = createObject(Type.resolveClass(name));
-            singletons.set(name, r);
-            return r;
+            data.value = createObject(data.mapTo);
+            return data.value;
         }
 
         return createObject(instances.get(name));
     }
 
-    function createObject(type:Class<Dynamic>) : Dynamic
+    function createObject(mapToName:String) : Dynamic
     {
+        final type = Type.resolveClass(mapToName);
         if (type == null) return null;
 
         final r = Type.createInstance(type, [ this ]);
